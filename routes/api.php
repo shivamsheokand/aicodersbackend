@@ -6,6 +6,15 @@ use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\ContactAttachmentController;
 use App\Http\Controllers\Api\ContactCategoryController;
 
+// Health Check endpoint
+Route::get('/health', function () {
+    return response()->json([
+        'status' => 'ok',
+        'timestamp' => now()->toIso8601String(),
+        'environment' => config('app.env'),
+    ]);
+});
+
 Route::middleware('api')->group(function () {
     Route::get('contacts/purpose-options', [ContactController::class, 'purposeOptions']);
     Route::get('contacts/stats', [ContactController::class, 'stats']);

@@ -1,230 +1,130 @@
-# Contact Management System
+# AI Coders Backend API
 
-## API Documentation
+## Deployment Guide for Hostinger
 
-### Base URL
+### Prerequisites
 
+-   PHP 8.1+
+-   MySQL 5.7+
+-   Composer
+-   Node.js & npm
+-   Git
+
+### Initial Server Setup
+
+1. Login to Hostinger control panel
+2. Create a new subdomain: `backaicoders.aicoders.in`
+3. Create a new MySQL database and user
+4. Enable SSH access if not already enabled
+
+### Deployment Steps
+
+1. **Clone the Repository**
+
+```bash
+cd /home/u143511568/domains/backaicoders.aicoders.in
+git clone <repository-url> .
 ```
-/api
+
+2. **Configure Environment**
+
+-   Copy `.env.production` to `.env`
+-   Update database credentials and other settings
+-   Generate application key if needed: `php artisan key:generate`
+
+3. **Install Dependencies**
+
+```bash
+composer install --no-dev --optimize-autoloader
+npm ci
+npm run build
 ```
 
-### Available Endpoints
+4. **Set Permissions**
 
-#### List All Contacts
+```bash
+chmod -R 755 .
+chmod -R 777 storage bootstrap/cache
+```
 
--   **GET** `/contacts`
--   **Query Parameters:**
-    -   `page`: Page number (default: 1)
-    -   `per_page`: Items per page (default: 10)
-    -   `sort_by`: Field to sort by (name, email, purpose, created_at)
-    -   `sort_direction`: Sort direction (asc, desc)
-    -   `search`: Search term for name, email, or message
-    -   `purpose`: Filter by purpose
--   **Response:**
-    ```json
-    {
-      "data": [...],
-      "links": {
-        "first": "http://...",
-        "last": "http://...",
-        "prev": null,
-        "next": "http://..."
-      },
-      "meta": {
-        "current_page": 1,
-        "from": 1,
-        "last_page": 5,
-        "path": "http://...",
-        "per_page": 10,
-        "to": 10,
-        "total": 50
-      }
-    }
-    ```
+5. **Setup Database**
 
-#### Create New Contact
+```bash
+php artisan migrate --force
+php artisan db:seed
+```
 
--   **POST** `/contacts`
--   **Body:**
-    ```json
-    {
-        "name": "John Doe",
-        "email": "john@example.com",
-        "mobile": "1234567890",
-        "purpose": "general",
-        "message": "Sample message"
-    }
-    ```
--   **Validation:**
-    -   name: Required, min 3 chars, max 255 chars
-    -   email: Required, valid email
-    -   mobile: Required, 10 digits
-    -   purpose: Required, one of: general, support, feedback, business, other
-    -   message: Required, min 10 chars
+6. **Create Storage Link**
 
-#### Get Contact Details
+```bash
+php artisan storage:link
+```
 
--   **GET** `/contacts/{id}`
--   **Response:** Single contact object
+7. **Configure Web Server**
 
-#### Update Contact
+-   Copy `nginx.conf` to the appropriate Hostinger configuration directory
+-   Update paths in the configuration file if needed
+-   Restart Nginx if required
 
--   **PUT** `/contacts/{id}`
--   **Body:** Same as create contact
+8. **SSL Configuration**
 
-#### Delete Contact
+-   Install SSL certificate through Hostinger control panel
+-   Update SSL certificate paths in nginx configuration
 
--   **DELETE** `/contacts/{id}`
--   **Response:** 204 No Content
+### Automatic Deployment
 
-#### Get Purpose Options
+You can use the included `deploy.sh` script for automated deployments:
 
--   **GET** `/contacts/purpose-options`
--   **Response:**
-    ```json
-    {
-        "general": "General Inquiry",
-        "support": "Technical Support",
-        "feedback": "Feedback",
-        "business": "Business Opportunity",
-        "other": "Other"
-    }
-    ```
+```bash
+chmod +x deploy.sh
+./deploy.sh
+```
 
-#### Get Contact Statistics
+### Post-Deployment Verification
 
--   **GET** `/contacts/stats`
--   **Response:**
-    ```json
-    {
-        "total": 50,
-        "by_purpose": {
-            "general": {
-                "count": 20,
-                "label": "General Inquiry"
-            },
-            "support": {
-                "count": 15,
-                "label": "Technical Support"
-            }
-            // ...other purposes
-        },
-        "recent": [
-            {
-                "id": 1,
-                "name": "John Doe",
-                "created_at": "2025-04-30T..."
-            }
-            // ...more recent contacts
-        ]
-    }
-    ```
+1. Check application logs: `storage/logs/laravel.log`
+2. Verify the API endpoints are accessible
+3. Confirm CORS is working with the frontend
+4. Test file uploads and storage
+5. Verify database connections and migrations
 
-### File Attachment Endpoints
+### Maintenance
 
-#### Upload Attachment
+-   Regular backups are configured through Hostinger panel
+-   Monitor logs in `storage/logs/`
+-   Use `php artisan down` for maintenance mode
 
--   **POST** `/contacts/{contact_id}/attachments`
--   **Content-Type:** multipart/form-data
--   **Body:**
-    -   file: File upload (Required)
--   **Supported Files:** PDF, DOC, DOCX, JPG, JPEG, PNG
--   **Max Size:** 10MB
--   **Response:**
-    ```json
-    {
-        "data": {
-            "id": 1,
-            "filename": "document.pdf",
-            "mime_type": "application/pdf",
-            "size": 1024000,
-            "url": "http://example.com/storage/attachments/uuid.pdf",
-            "created_at": "2025-04-30T..."
-        }
-    }
-    ```
+### Security Notes
 
-#### Download Attachment
+-   Keep `.env` secure and never commit it
+-   Regularly update dependencies
+-   Monitor access logs
+-   Enable rate limiting if needed
+-   Keep SSL certificates up to date
 
--   **GET** `/contacts/{contact_id}/attachments/{attachment_id}/download`
--   **Response:** File download with original filename
+### Troubleshooting
 
-#### Delete Attachment
+1. **Permission Issues**
 
--   **DELETE** `/contacts/{contact_id}/attachments/{attachment_id}`
--   **Response:** 204 No Content
+    - Check storage and cache directory permissions
+    - Verify PHP-FPM user permissions
 
-## Application Features
+2. **Database Connection**
 
-### Current Features
+    - Verify credentials in `.env`
+    - Check database server status
+    - Confirm firewall settings
 
-1. Contact Management
+3. **CORS Issues**
 
-    - Create, read, update, delete contacts
-    - Form validation
-    - Purpose selection dropdown
-    - Mobile number validation
-    - Success messages
-    - Error handling
+    - Verify CORS headers in nginx config
+    - Check allowed origins configuration
 
-2. RESTful API
-    - Full CRUD operations
-    - Purpose options endpoint
-    - Validation
-    - JSON responses with proper status codes
-    - Pagination support
-    - Sorting by multiple fields
-    - Search functionality
-    - Purpose-based filtering
-    - Contact statistics
-    - File upload and download endpoints
-    - Attachment management
-    - Secure file handling
+4. **File Upload Problems**
+    - Check PHP upload limits
+    - Verify storage directory permissions
+    - Confirm symbolic links
 
-### Roadmap
+### Contact
 
-#### Phase 1: Enhanced Contact Management
-
--   [x] Add pagination for contacts list
--   [x] Add sorting and filtering options
--   [x] Implement search functionality
--   [x] Add file attachments support
--   [ ] Add contact categories
-
-#### Phase 2: User Management
-
--   [ ] User authentication
--   [ ] User roles and permissions
--   [ ] Contact assignment to users
--   [ ] User activity logging
-
-#### Phase 3: Communication Features
-
--   [ ] Email notifications
--   [ ] SMS notifications
--   [ ] Contact history tracking
--   [ ] Message templates
--   [ ] Bulk operations
-
-#### Phase 4: Analytics and Reporting
-
--   [ ] Contact statistics dashboard
--   [ ] Custom report generation
--   [ ] Export data (CSV, Excel)
--   [ ] Analytics charts and graphs
-
-#### Phase 5: Integration and Enhancement
-
--   [ ] Third-party CRM integration
--   [ ] Calendar integration
--   [ ] API rate limiting
--   [ ] API authentication
--   [ ] Swagger/OpenAPI documentation
-
-## Contributing
-
-Please read our contributing guidelines before submitting pull requests.
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+For support, contact the development team at support@aicoders.in
